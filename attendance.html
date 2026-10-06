@@ -331,10 +331,12 @@ async function saveAttendanceOnline(records){
   },{onConflict:"form_number,form_date"});
   if(error) throw error;
 }
-function setRecords(data){
+async function setRecords(data){
   memoryRecords=data||{};
   try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(memoryRecords)); }catch(e){}
-  saveAttendanceOnline(memoryRecords).catch(e=>console.error("Attendance online save error:",e));
+  await saveAttendanceOnline(memoryRecords);
+  try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(memoryRecords)); }catch(e){}
+  return memoryRecords;
 }
 function getEmployeeByPassword(p){return employees.find(x=>x[1]===p)}
 function pad(n){return String(n).padStart(2,"0")}
@@ -406,8 +408,9 @@ function msg(id,text){
   const el=document.getElementById(id);el.textContent=text;el.classList.remove("hidden");
 }
 
-function login(){
+async function login(){
   const p=document.getElementById("password").value.trim();
+  try{ await loadAttendanceOnline(); }catch(e){ console.error("Attendance online login load error:",e); }
   if(p===MANAGER_PASSWORD){
     hide("loginPage");hide("adminPage");show("managerPage");initManager();return;
   }
@@ -500,7 +503,7 @@ function setupTimeInput(id, saveFn=saveAttendance){
   });
 }
 
-function saveManagerAttendance(){
+async function saveManagerAttendance(){
   const person=document.getElementById("managerPerson").value;
   const date=inputDateToGregorian(document.getElementById("managerDate").value);
   const type=document.getElementById("managerType").value;
@@ -508,8 +511,15 @@ function saveManagerAttendance(){
   if(!person||!date||!time){msg("managerMsg","پرسنل، تاریخ و ساعت را کامل کنید.");return}
   if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)){msg("managerMsg","ساعت را به صورت ۲۴ ساعته وارد کنید؛ مثال 08:30");return}
   const records=getRecords(); const key=person+"|"+date;
-  records[key]=records[key]||{person,date,in:"",out:""}; records[key][type]=time; setRecords(records);
-  msg("managerMsg","اطلاعات با موفقیت ثبت/ویرایش شد."); renderManager();
+  records[key]=records[key]||{person,date,in:"",out:""}; records[key][type]=time;
+  try{
+    await setRecords(records);
+    msg("managerMsg","اطلاعات با موفقیت در سامانه آنلاین ذخیره شد.");
+    renderManager();
+  }catch(e){
+    console.error("Attendance manager online save error:",e);
+    msg("managerMsg","خطا در ذخیره آنلاین اطلاعات؛ ساعت ذخیره نشد. اتصال اینترنت و دسترسی سامانه را بررسی کنید.");
+  }
 }
 
 function renderManager(){
@@ -686,8 +696,10 @@ loadAttendanceOnline().then(()=>{
 });
 
 (function(){
-  const name=getAttendanceUser();
-  if(name&&employees.some(e=>e[0]===name)){hide("loginPage");show("employeePage");loadEmployee(name)}
+  loadAttendanceOnline().then(()=>{
+    const name=getAttendanceUser();
+    if(name&&employees.some(e=>e[0]===name)){hide("loginPage");show("employeePage");loadEmployee(name)}
+  });
 })();
 
 /* =========================================================
