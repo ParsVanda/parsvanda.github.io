@@ -970,7 +970,7 @@ function renderEmployeeManagement(){
     if(current!=="" && employees[Number(current)]) sel.value=current;
   }
   if(!box)return;
-  box.innerHTML=employees.length?`<table><thead><tr><th>ردیف</th><th>نام و نام خانوادگی</th><th>رمز ورود</th><th>عملیات</th></tr></thead><tbody>${employees.map((e,i)=>`<tr><td>${i+1}</td><td style="font-weight:bold">${escapeHtml(e[0])}</td><td>${escapeHtml(e[1])}</td><td><button type="button" class="danger" style="width:auto;padding:7px 12px" onclick="removeEmployee(${i})">🗑 حذف</button></td></tr>`).join("")}</tbody></table>`:`<div class="empty">پرسنی ثبت نشده است.</div>`;
+  box.innerHTML=employees.length?`<details class="employee-list-collapse" style="margin-top:14px"><summary style="cursor:pointer;font-weight:700;padding:10px 12px;border-radius:10px;background:var(--soft,#f5f7fa);list-style-position:inside">👥 لیست پرسنل <span class="badge">${employees.length} نفر</span></summary><div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>ردیف</th><th>نام و نام خانوادگی</th><th>رمز ورود</th><th>عملیات</th></tr></thead><tbody>${employees.map((e,i)=>`<tr><td>${i+1}</td><td style="font-weight:bold">${escapeHtml(e[0])}</td><td>${escapeHtml(e[1])}</td><td><button type="button" class="danger" style="width:auto;padding:7px 12px" onclick="removeEmployee(${i})">🗑 حذف</button></td></tr>`).join("")}</tbody></table></div></details>`:`<div class="empty">پرسنی ثبت نشده است.</div>`;
 }
 async function removeSelectedEmployee(){
   const sel=document.getElementById("removeEmployeeSelect");
